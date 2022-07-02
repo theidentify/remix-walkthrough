@@ -1,46 +1,67 @@
-import type { LinksFunction } from '@remix-run/node';
-import { Link, Links, LiveReload, Outlet, useCatch } from '@remix-run/react';
+import type {
+  LinksFunction,
+  MetaFunction,
+} from "@remix-run/node";
+import {
+  Links,
+  LiveReload,
+  Meta,
+  Outlet,
+  useCatch,
+} from "@remix-run/react";
 
-import globalStylesUrl from './styles/global.css';
-import globalMediumStylesUrl from './styles/global-medium.css';
-import globalLargeStylesUrl from './styles/global-large.css';
+import globalStylesUrl from "./styles/global.css";
+import globalMediumStylesUrl from "./styles/global-medium.css";
+import globalLargeStylesUrl from "./styles/global-large.css";
 
 export const links: LinksFunction = () => {
   return [
+    { rel: "stylesheet", href: globalStylesUrl },
     {
-      rel: 'stylesheet',
-      href: globalStylesUrl,
-    },
-    {
-      rel: 'stylesheet',
+      rel: "stylesheet",
       href: globalMediumStylesUrl,
-      media: 'print, (min-width: 640px)',
+      media: "print, (min-width: 640px)",
     },
     {
-      rel: 'stylesheet',
+      rel: "stylesheet",
       href: globalLargeStylesUrl,
-      media: 'screen and (min-width: 1024px)',
+      media: "screen and (min-width: 1024px)",
     },
   ];
 };
 
+export const meta: MetaFunction = () => {
+  const description = `Learn Remix and laugh at the same time!`;
+  return {
+    charset: "utf-8",
+    description,
+    keywords: "Remix,jokes",
+    "twitter:image": "https://remix-jokes.lol/social.png",
+    "twitter:card": "summary_large_image",
+    "twitter:creator": "@remix_run",
+    "twitter:site": "@remix_run",
+    "twitter:title": "Remix Jokes",
+    "twitter:description": description,
+  };
+};
+
 function Document({
-  title = `Remix: So great, it's funny`,
   children,
+  title = `Remix: So great, it's funny!`,
 }: {
-  title?: string;
   children: React.ReactNode;
+  title?: string;
 }) {
   return (
-    <html lang='en'>
+    <html lang="en">
       <head>
-        <meta charSet='utf-8' />
+        <Meta />
         <title>{title}</title>
         <Links />
       </head>
       <body>
         {children}
-        {process.env.NODE_ENV === 'development' ? <LiveReload /> : null}
+        <LiveReload />
       </body>
     </html>
   );
@@ -54,27 +75,29 @@ export default function App() {
   );
 }
 
-export function ErrorBoundary({ error }: { error: Error }) {
+export function CatchBoundary() {
+  const caught = useCatch();
+
   return (
-    <Document title='Oh no!'>
-      <div className='error-container'>
-        <h1>Something went wrong</h1>
-        <p>{error.message}</p>
+    <Document
+      title={`${caught.status} ${caught.statusText}`}
+    >
+      <div className="error-container">
+        <h1>
+          {caught.status} {caught.statusText}
+        </h1>
       </div>
     </Document>
   );
 }
 
-export function CatchBoundary() {
-  let caught = useCatch();
-  if (caught.status === 401) {
-    return (
-      <Document title='Oh no!'>
-        <div className='error-container'>
-          <p>You must login to proceed</p>
-          <Link to='/login'>Login</Link>
-        </div>
-      </Document>
-    );
-  }
+export function ErrorBoundary({ error }: { error: Error }) {
+  return (
+    <Document title="Uh-oh!">
+      <div className="error-container">
+        <h1>App Error</h1>
+        <pre>{error.message}</pre>
+      </div>
+    </Document>
+  );
 }
