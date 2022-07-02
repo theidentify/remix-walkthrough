@@ -1,5 +1,5 @@
 import type { LinksFunction } from '@remix-run/node';
-import { Links, LiveReload, Outlet } from '@remix-run/react';
+import { Link, Links, LiveReload, Outlet, useCatch } from '@remix-run/react';
 
 import globalStylesUrl from './styles/global.css';
 import globalMediumStylesUrl from './styles/global-medium.css';
@@ -63,4 +63,18 @@ export function ErrorBoundary({ error }: { error: Error }) {
       </div>
     </Document>
   );
+}
+
+export function CatchBoundary() {
+  let caught = useCatch();
+  if (caught.status === 401) {
+    return (
+      <Document title='Oh no!'>
+        <div className='error-container'>
+          <p>You must login to proceed</p>
+          <Link to='/login'>Login</Link>
+        </div>
+      </Document>
+    );
+  }
 }
