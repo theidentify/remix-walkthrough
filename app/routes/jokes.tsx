@@ -1,24 +1,27 @@
-import type { Joke } from '@prisma/client';
+import type { Joke, User } from '@prisma/client';
 import type { LinksFunction, LoaderFunction } from '@remix-run/node';
 import { Outlet, Link, useLoaderData } from '@remix-run/react';
 
 import stylesUrl from '~/styles/jokes.css';
 import { db } from '~/utils/db.server';
+import { getUser } from '~/utils/session.server';
 
 export const links: LinksFunction = () => {
   return [{ rel: 'stylesheet', href: stylesUrl }];
 };
 
-type LoaderData = { jokeListItems: Array<Pick<Joke, 'id' | 'name'>> };
-export let loader: LoaderFunction = async () => {
+type LoaderData = {
+  jokeListItems: Array<Pick<Joke, 'id' | 'name'>>;
+  user: User | null;
+};
+export let loader: LoaderFunction = async ({ request }) => {
+  let user = await getUser(request);
   let jokeListItems = await db.joke.findMany({
     take: 5,
     select: { id: true, name: true },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
   });
-  // let jokeListItems = jokes.map(j => ({ id: j.id, name: j.name }))
-  // console.log(jokeListItems);
-  let data = { jokeListItems };
+  let data = { jokeListItems, user };
   return data;
 };
 
@@ -34,6 +37,18 @@ export default function JokesRoute() {
               <span className='logo-medium'>J🤪KES</span>
             </Link>
           </h1>
+          {data.user ? (
+            <div className='user-info'>
+              <span>{`Hi ${data.user.username}`}</span>
+              <form action='/logout' method='post'>
+                <button type='submit' className='button'>
+                  Logout
+                </button>
+              </form>
+            </div>
+          ) : (
+            <Link to='/login'>Login</Link>
+          )}
         </div>
       </header>
       <main className='jokes-main'>
@@ -47,9 +62,6 @@ export default function JokesRoute() {
                   <Link to={j.id}>{j.name}</Link>
                 </li>
               ))}
-              {/* <li>
-                <Link to="some-joke-id">Hippo</Link>
-              </li> */}
             </ul>
             <Link to='new' className='button'>
               Add your own
